@@ -1,0 +1,54 @@
+body {
+	background-color: #fff3e5;
+}
+.sidenav {
+	height: 100%;
+	width: 	200px;
+	position: fixed;
+	z-index: 1;
+	top: 0;
+	left: 0;
+	background-color: #101010;
+	padding-top: 20px;
+	text-align: center;
+}
+
+h2,h4 {
+	color:white; 
+	margin-left: 10px;
+}
+
+.inputfile {
+	display: none;
+}
+
+.inputfile + label {
+	border-radius: 0%;
+	width: 70%;
+    font-size: 18px;
+    font-weight: 700;
+    color: white;
+    background-color: #c2845d;
+    display: inline-block;
+    padding: 8px 6px 8px 6px;
+    margin-top: 20px;
+}
+
+.inputfile:focus + label,
+.inputfile + label:hover {
+    background-color: #5d8ac2;
+}
+
+button {
+	margin-top: 10px;
+}
+
+
+.main {
+	margin-left: 200px;
+}
+canvas {
+	width: 100%;
+	height: 100%;
+	background-color: #fff;
+}

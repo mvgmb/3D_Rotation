@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" type="text/css" href="style.css">
+	<title>Projeto PG - Rotação em 3 Eixos</title>
+</head>
+<body>
+
+	<div class="sidenav" id="sidenav">
+		<h2>PG Project #2</h1>
+		<h4 style="color:white; text-align: center;"> ltcm gagp mvgmb mlbas</h3>
+
+		<input type="file" id="cameraFile" class="inputfile" />
+		<label for="cameraFile">Load Camera</label>
+
+		<input type="file" id="lightFile" class="inputfile" />
+		<label for="lightFile">Load Ilumination</label>
+
+		<input type="file" id="objectFile" class="inputfile" />
+		<label for="objectFile">Load Object</label>
+
+		<button id="read">Finished Loading</button>
+
+		<p style="color:white; font-size: 20px; margin-top:20px;">Radius</p>
+		<input type="text" id="Radius">]
+
+		<button id="ox">OX</button>
+		<button id="oy">OY</button>
+		<button id="oz">OZ</button>
+		<br>
+		<button id="rotate">Rotate!</button>
+	</div>
+	<div class="main">
+
+		<canvas id="canvas"></canvas>
+	</div>	
+	<script type="text/javascript" src="js/reader.js"></script>
+	<script type="text/javascript" src="js/vector.js"></script>
+	<script type="text/javascript" src="js/camera.js"></script>
+	<script type="text/javascript" src="js/point.js"></script>
+	<script type="text/javascript" src="js/point2d.js"></script>
+	<script type="text/javascript" src="js/matrix.js"></script>
+	<script type="text/javascript" src="js/triangle.js"></script>
+
+
+	<script type="text/javascript" src="js/script.js"></script>  	
+
+</body>
+</html>
