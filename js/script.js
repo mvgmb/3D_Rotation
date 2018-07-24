@@ -30,9 +30,13 @@ function barycentric(p, a, b, c) {
     var v0 = b.minus(a),
     	v1 = c.minus(a),
     	v2 = p.minus(a);
+
+    var invdet = 0;
     // Inverted because multiplication below is faster than division
-    var invdet = 1 / (v0.x * v1.y - v1.x * v0.y); // 1/det(T)
-    
+   	if ((v0.x * v1.y - v1.x * v0.y) != 0) { 
+   		var invdet = 1 / (v0.x * v1.y - v1.x * v0.y); // 1/det(T)
+   	}
+
     var v = (v2.x * v1.y - v1.x * v2.y) * invdet;
     var w = (v0.x * v2.y - v2.x * v0.y) * invdet;
     var u = 1 - v - w;
@@ -194,8 +198,21 @@ function prepRoutine() {
 }
 
 function mainRoutine() {
+	// Ordering faces (aka triangles) so eases up on the color calculus
+	// Therefore the ones closer to the screen will be the first to be rendered
+    window.object.F = window.object.F.sort(function(f1, f2) {
+		var f1_avg = (window.object.V[f1.a].z +
+				 	  window.object.V[f1.b].z +
+				 	  window.object.V[f1.c].z)/3;
+		var f2_avg = (window.object.V[f2.a].z +
+				 	  window.object.V[f2.b].z +
+				 	  window.object.V[f2.c].z)/3;
+		return f1_avg - f2_avg;
+    });
+
 	window.object.S = [];
 
+	// Transforming camera coordinates into screen coordinates and storing is S[]
 	for (var i = 0; i < (window.object.V.length); i++) {
 		var x = ((window.camera.d / window.camera.hx) 
 			     *(window.object.V[i].x / window.object.V[i].z));
@@ -206,39 +223,33 @@ function mainRoutine() {
 		y = Math.floor((1 - y) * window.canvas.height / 2);
 		
 		window.object.S[i] = new Point2d(x, y, i);
-		
 	}
-	// Create and initialize z-buffer with infinity values
+
+	// Create and initialize z_buffer with infinity values
 	window.z_buffer = createArray(window.canvas.width, window.canvas.height, Infinity);
 
-	// Update z-buffer
-	for (var i = 0; i < (window.object.V.length); i++) {
-		var p2 = window.object.S[i];
-		var p3 = window.object.V[i];
-		if (p3.z < window.z_buffer[p2.x][p2.y]) {
-			window.z_buffer[p2.x][p2.y] = p3.z;
-		}
-	}
 	// Draws each triangle
 	for (var i = 0; i < (window.object.F.length); i++) {
 		scanLine(i);
 	}
 
-	
-	/*
-	// TEST ############################# 
-	for (var i = 0; i < (window.object.V.length); i++) {
-		var p2 = window.object.S[i];
-		var p3 = window.object.V[i];
-		if (p3.z <= window.z_buffer[p2.x][p2.y]) {
-			phong(window.object.V[i].N, i);
-		}
-	}
-	//###################################
+	/* Show centroid on screen
+	var r = ((window.camera.d / window.camera.hx) 
+			*(window.object.centroid.x / window.object.centroid.z));
+	var t = ((window.camera.d / window.camera.hy) 
+	 		*(window.object.centroid.y / window.object.centroid.z));
+
+	r = Math.floor((r + 1) * window.canvas.width / 2);
+	t = Math.floor((1 - t) * window.canvas.height / 2);
+
+	window.ctx.fillStyle = 'rgb(0,255,0)';
+   	window.ctx.fillRect(r, t, 1, 1);
+  	window.ctx.stroke();
 	*/
 }
 
 function prepRotation() {
+
 
 }
 
@@ -283,10 +294,6 @@ function scanLine(i) {
 }	
 
 function drawTriangle(v1, v2, v3, i) {
-	//var v1 = window.object.S[i1],
-	//	v2 = window.object.S[i2],
-	//	v3 = window.object.S[i3];
-
 	// Check for bottom-flat triangle
 	if (v2.y == v3.y) {
     	fillBottomFlatTriangle(v1, v2, v3, i, v1, v2, v3);
@@ -324,17 +331,15 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
   	var curx2 = v1.x;
 
     for (var y = v1.y; y <= v2.y; y++) {
-    	//window.ctx.fillStyle = 'rgb(0,255,0)';
-   		//window.ctx.fillRect(curx1, y, 1, 1);
-   		//window.ctx.fillRect(curx2, y, 1, 1);
-    	//window.ctx.stroke();
-
+    	for (var k = curx1; k >= curx2; k--) {
+			prePhong(k, y, s1, s2, s3, i);
+		}
     	curx1 += invslope1;
     	curx2 += invslope2;
   	}
 }
 
-function fillTopFlatTriangle(v1, v2, v3, i) {
+function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	var invslope1, invslope2; 
 
 	// Handling division by zero
@@ -354,43 +359,52 @@ function fillTopFlatTriangle(v1, v2, v3, i) {
 
 	// Scanline y == y
 	for (var y = v3.y; y > v1.y; y--) {
-		//window.ctx.fillStyle = 'rgb(255,0,0)';
-   		//window.ctx.fillRect(curx1, y, 1, 1);
-   		//window.ctx.fillRect(curx2, y, 1, 1);
-    	//window.ctx.stroke();
-
-    	// Calculating barycentric coordinates using the screen points
-    	var bar = barycentric(new Point2d(curx1, y), v1, v2, v3);
-	    	
-    	// Original 3d points
-    	var a = window.object.V[window.object.F[i].a],
-    		b = window.object.V[window.object.F[i].b],
-    		c = window.object.V[window.object.F[i].c];
-
-    	var N = (((a.N.scalarMult(bar.u)).plus(b.N.scalarMult(bar.v))).plus(c.N.scalarMult(bar.w))).normalize();
-
-    	var x = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
-    	    y = (a.y * bar.u) + (b.y * bar.v) + (c.y * bar.w),
-    	    z = (a.z * bar.u) + (b.z * bar.v) + (c.z * bar.w),
-    	    p = new Point(x, y, z);
-
-    	var s = new Point2d(curx1, y, i);
-
-    	phong(N, p, s);
+		for (var k = curx1; k <= curx2; k++) {
+			prePhong(k, y, s1, s2, s3, i);
+		}
 	    curx1 -= invslope1;
 	    curx2 -= invslope2;
 	}
 }
 
-// N is the normal, p is aproximation of the point in 3d and s is the 2d screen location 
+function prePhong(x, y, s1, s2, s3, i) {
+	// Calculating barycentric coordinates using the screen points
+    var bar = barycentric(new Point2d(x, y), s1, s2, s3);
+	    	
+    // Original 3d points
+    var a = window.object.V[window.object.F[i].a],
+    	b = window.object.V[window.object.F[i].b],
+    	c = window.object.V[window.object.F[i].c];
+
+   	// p is the aproximation of the 3d point coordinate 
+   	// p = u*a + v*b + w*c
+	var pz = (a.z * bar.u) + (b.z * bar.v) + (c.z * bar.w);
+
+
+	if (pz < window.z_buffer[Math.round(x)][y]){
+		window.z_buffer[Math.round(x)][y] = pz;
+
+		var px = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
+   	    	py = (a.y * bar.u) + (b.y * bar.v) + (c.y * bar.w);
+
+    	var N = (((a.N.scalarMult(bar.u)).plus(b.N.scalarMult(bar.v))).plus(c.N.scalarMult(bar.w))).normalize();
+
+    	var s = new Point2d(x, y, i);
+	    	
+    	phong(N, new Point(px, py, px), s);
+   	}
+}
+
+// N is the normal (already normalized), p is aproximation of the point in 3d and s is the 2d screen location 
 function phong(N, p, s) {
-	console.log(phong);
-	console.log(s);
-    //N = N.normalize();
-    var L = (window.light.Pl.minus(p)).normalize();
+	 // V = (-1) * p
     var V = (new Vector(-p.x, -p.y, -p.z)).normalize();
+    // L = Pl - p
+    var L = (window.light.Pl.minus(p)).normalize();
+
     var R = (N.scalarMult(((N.dotProduct(L)) * 2))).minus(L);
     R = R.normalize();
+
     var ka = window.light.ka;
     var ks = window.light.ks;
     var kd = window.light.kd;
@@ -414,11 +428,11 @@ function phong(N, p, s) {
     var Id = Il.scalarMult(ks * Math.pow(cosRV, n));
 
     var I = Iamb.plus(Id).plus(Is);
-    
+
     I.x = Math.min(I.x, 255);
     I.y = Math.min(I.y, 255);
     I.z = Math.min(I.z, 255);
-   // console.log(I);
+  
 	window.ctx.fillStyle = 'rgb(' + I.x + ',' + I.y + ',' + I.z +')';
    	window.ctx.fillRect(s.x, s.y, 1, 1);
   	window.ctx.stroke();
