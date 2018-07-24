@@ -330,7 +330,7 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
     var curx1 = v1.x;
   	var curx2 = v1.x;
 
-	if (invslope1 > invslope2v) {
+	if (invslope1 > invslope2) {
 		var tmp = invslope2;
 		invslope2 = invslope1;
 		invslope1 = tmp;
@@ -363,7 +363,7 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	var curx1 = v3.x;
 	var curx2 = v3.x;
 
-	if (invslope1 > invslope2) {
+	if (invslope1 < invslope2) {
 		var tmp = invslope2;
 		invslope2 = invslope1;
 		invslope1 = tmp;
@@ -372,7 +372,7 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	// Scanline y == y
 	for (var y = v3.y; y > v1.y; y--) {
 		
-		for (var k = aux1; k <= aux2; k++) {
+		for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
 		}
 	    curx1 -= invslope1;
@@ -392,7 +392,6 @@ function prePhong(x, y, s1, s2, s3, i) {
    	// p is the aproximation of the 3d point coordinate 
    	// p = u*a + v*b + w*c
 	var pz = (a.z * bar.u) + (b.z * bar.v) + (c.z * bar.w);
-
 
 	if (pz < window.z_buffer[Math.round(x)][y]){
 		window.z_buffer[Math.round(x)][y] = pz;
