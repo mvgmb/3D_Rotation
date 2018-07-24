@@ -330,11 +330,17 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
     var curx1 = v1.x;
   	var curx2 = v1.x;
 
+	if (invslope1 > invslope2v) {
+		var tmp = invslope2;
+		invslope2 = invslope1;
+		invslope1 = tmp;
+	}
+
     for (var y = v1.y; y <= v2.y; y++) {
-    	for (var k = curx1; k >= curx2; k--) {
+    	for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
 		}
-    	curx1 += invslope1;
+	   	curx1 += invslope1;
     	curx2 += invslope2;
   	}
 }
@@ -357,9 +363,16 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	var curx1 = v3.x;
 	var curx2 = v3.x;
 
+	if (invslope1 > invslope2) {
+		var tmp = invslope2;
+		invslope2 = invslope1;
+		invslope1 = tmp;
+	}
+	
 	// Scanline y == y
 	for (var y = v3.y; y > v1.y; y--) {
-		for (var k = curx1; k <= curx2; k++) {
+		
+		for (var k = aux1; k <= aux2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
 		}
 	    curx1 -= invslope1;
