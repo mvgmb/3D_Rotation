@@ -162,7 +162,7 @@ function prepRoutine() {
 		ac = pc.minus(pa);
 
 		var N = ac.crossProduct(ab);
-		N = N.normalize();
+		window.object.F[i].N = N.normalize();
 
 		// Adding normals of the triangles to the vertexes
 		window.object.V[a].N = (window.object.V[a].N).plus(N);
@@ -183,6 +183,8 @@ function prepRoutine() {
 		CA_sum.y += by * area;
 		CA_sum.z += bz * area;
 	}
+	console.log(window.object.F);
+
 
 	// Find centroid
 	window.object.centroid.x = CA_sum.x / A_sum;
@@ -339,6 +341,10 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
     for (var y = v1.y; y <= v2.y; y++) {
     	for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
+			//window.ctx.fillStyle = 'rgb(0,0,255)';
+		   //	window.ctx.fillRect(curx1, y, 1, 1);	
+		   //	window.ctx.fillRect(curx2, y, 1, 1);
+		  	//window.ctx.stroke();
 		}
 	   	curx1 += invslope1;
     	curx2 += invslope2;
@@ -374,6 +380,10 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 		
 		for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
+			/*window.ctx.fillStyle = 'rgb(0,0,255)';
+		   	window.ctx.fillRect(curx1, y, 1, 1);	
+		   	window.ctx.fillRect(curx2, y, 1, 1);
+			window.ctx.stroke(); */ 
 		}
 	    curx1 -= invslope1;
 	    curx2 -= invslope2;
@@ -383,7 +393,7 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 function prePhong(x, y, s1, s2, s3, i) {
 	// Calculating barycentric coordinates using the screen points
     var bar = barycentric(new Point2d(x, y), s1, s2, s3);
-	    	
+
     // Original 3d points
     var a = window.object.V[window.object.F[i].a],
     	b = window.object.V[window.object.F[i].b],
@@ -395,7 +405,7 @@ function prePhong(x, y, s1, s2, s3, i) {
 
 	if (pz < window.z_buffer[Math.round(x)][y]){
 		window.z_buffer[Math.round(x)][y] = pz;
-
+		
 		var px = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
    	    	py = (a.y * bar.u) + (b.y * bar.v) + (c.y * bar.w);
 
@@ -409,11 +419,12 @@ function prePhong(x, y, s1, s2, s3, i) {
 
 // N is the normal (already normalized), p is aproximation of the point in 3d and s is the 2d screen location 
 function phong(N, p, s) {
-	 // V = (-1) * p
+	// V = (-1) * p
     var V = (new Vector(-p.x, -p.y, -p.z)).normalize();
     // L = Pl - p
     var L = (window.light.Pl.minus(p)).normalize();
 
+    // R = 2(L.N)N - L
     var R = (N.scalarMult(((N.dotProduct(L)) * 2))).minus(L);
     R = R.normalize();
 
@@ -425,20 +436,38 @@ function phong(N, p, s) {
     var Il = window.light.Il;
     var n = window.light.n;
 
+    // If V.N < 0 , then N = -N
     if (V.dotProduct(N) < 0) {
 		N = N.scalarMult(-1);
     }
-    var cosLN = L.dotProduct(N);
+
+    var cosNL = N.dotProduct(L);
+
+    // If N.L < 0, then neither difuse or specular components
+    if (N.dotProduct(L) < 0) {
+    	kd = 0;
+    	ks = 0;
+    }
+
     var cosRV = R.dotProduct(V);
+
+    // If cosRV < 0, then there's no specular light
     if (cosRV < 0) {
 		ks = 0;
     }
 
-    var OdIl = Od.internalMult(Il);
-    var Iamb = Ia.scalarMult(ka);
-    var Is = OdIl.scalarMult(kd * cosLN);
-    var Id = Il.scalarMult(ks * Math.pow(cosRV, n));
+    var IlOd = Il.internalMult(Od);
 
+    // Iamb = Ia.ka
+    var Iamb = Ia.scalarMult(ka);
+
+    // Id = kd*(N.L) * (IlOd)
+    var Id = IlOd.scalarMult(kd * cosNL);
+
+    // Is = ks*(R.V)^n * Il
+    var Is = Il.scalarMult(ks * Math.pow(cosRV, n));
+
+    // total = ambient + difuse + specular
     var I = Iamb.plus(Id).plus(Is);
 
     I.x = Math.min(I.x, 255);

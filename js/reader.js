@@ -149,6 +149,7 @@ Reader.prototype.readObject = function() {
 		    F[i].a = this.nextInt() - 1;
 		    F[i].b = this.nextInt() - 1;
 		    F[i].c = this.nextInt() - 1;
+		    F[i].N = new Vector(0,0,0);
 		}
     } catch (error) {
 		throw 'File is not in the correct Object format\n' + error;
