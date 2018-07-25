@@ -5,11 +5,17 @@ Insert 3 files (listed below) and then define the degree of the rotation to rota
 
 camera.cfg
 /---------------------------------------\
+
 | -200 -50 300                          | ; C - Camera position in World Coordinates
+
 | 0.667 0.172 -1                        | ; Vector N
+
 | 0 3 0                                 | ; Vector V
+
 | 65 0.5 0.6                            | ; d hx hy
+
 |                                       |
+
 \---------------------------------------/
 
 ilumination.txt
