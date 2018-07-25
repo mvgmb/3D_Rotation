@@ -74,6 +74,10 @@ function fileReadingRoutine(e) {
 	// Get object from file
 	var fileTobeRead = document.getElementById(id).files[0];
 
+	// Setting label name
+	var str = document.getElementById(id).value;
+	document.getElementById(id + 'Label').innerHTML = str.split(/(\\|\/)/g).pop();
+
 	// Initialize FileReader 
 	var fileReader = new FileReader();
 
@@ -190,7 +194,6 @@ function prepRoutine() {
 		CA_sum.y += by * area;
 		CA_sum.z += bz * area;
 	}
-	console.log(window.object.F);
 
 
 	// Find centroid
@@ -200,9 +203,7 @@ function prepRoutine() {
 
 	// Normalizing vertexes normals
 	for (var i = 0; i < (window.object.V.length); i++) {
-		console.log(window.object.V[i].N);
 		window.object.V[i].N = (window.object.V[i].N).normalize();
-		console.log(window.object.V[i].N);
 	}
 
 	mainRoutine();
@@ -262,14 +263,14 @@ function mainRoutine() {
 }
 
 function prepRotation(e) {
-	console.log(e.target.id);
 	var id = e.target.id;
 	var deg = parseInt(document.getElementById('Radius').value);
-	if (isNaN(deg)) { deg = 90; }
+	if (isNaN(deg)) { deg = 0; }
 	deg = deg * Math.PI/180;
 
 	var cosine = Math.cos(deg),
 		sine = Math.sin(deg);
+
 	rotation(id, deg, cosine, sine);
 }
 
@@ -477,7 +478,7 @@ function prePhong(x, y, s1, s2, s3, i) {
 	var pz = (a.z * bar.u) + (b.z * bar.v) + (c.z * bar.w);
 	x = Math.round(x);
   	
-	//if (x >= 0 && x < window.canvas.width && y >= 0 && y < window.canvas.height){
+	if (x >= 0 && x < window.canvas.width && y >= 0 && y < window.canvas.height){
 		if (pz < window.z_buffer[x][y]) {
 			window.z_buffer[x][y] = pz;
 			var px = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
@@ -489,7 +490,7 @@ function prePhong(x, y, s1, s2, s3, i) {
 		    		
 	    	phong(N, new Point(px, py, pz), s);
 	   	}
-   //	}
+   }
 }
 
 // N is the normal (already normalized), p is aproximation of the point in 3d and s is the 2d screen location 
