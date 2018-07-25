@@ -2,7 +2,7 @@
 <html>
 <head>
 	<link rel="stylesheet" type="text/css" href="style.css">
-	<title>Projeto PG - Rotação em 3 Eixos</title>
+	<title>PG Project - 3 Axis Rotation</title>
 </head>
 <body>
 
@@ -12,21 +12,27 @@
 
 		<input type="file" id="cameraFile" class="inputfile" />
 		<label for="cameraFile">Load Camera</label>
+		<br>
+		<label id="cameraFileLabel" class="name">No camera loaded</label>
 
 		<input type="file" id="lightFile" class="inputfile" />
 		<label for="lightFile">Load Ilumination</label>
+				<br>
+		<label id="lightFileLabel" class="name">No ilumination loaded</label>
 
 		<input type="file" id="objectFile" class="inputfile" />
 		<label for="objectFile">Load Object</label>
+		<br>
+		<label id="objectFileLabel" class="name">No object loaded</label>
+		<br>
+		<button id="read" class="load">(Re)Load</button>
 
-		<button id="read" >Load/Update</button>
+		<p style="color:white; font-size: 20px; margin-top:20px;">Pick Radius</p>
+		<input type="text" id="Radius">
 
-		<p style="color:white; font-size: 20px; margin-top:20px;">Radius</p>
-		<input type="text" id="Radius">]
-
-		<button id="ox">OX</button>
-		<button id="oy">OY</button>
-		<button id="oz">OZ</button>
+		<button id="ox" class="o">OX</button>
+		<button id="oy" class="o">OY</button>
+		<button id="oz" class="o">OZ</button>
 	</div>
 	<div class="main">
 

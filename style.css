@@ -23,7 +23,7 @@ h2,h4 {
 }
 
 .inputfile + label {
-	border-radius: 0%;
+	border-radius: 20px;
 	width: 70%;
     font-size: 18px;
     font-weight: 700;
@@ -31,18 +31,52 @@ h2,h4 {
     background-color: #c2845d;
     display: inline-block;
     padding: 8px 6px 8px 6px;
-    margin-top: 20px;
+    margin-top: 10px;
+    margin-bottom: 3px; 
 }
 
 .inputfile:focus + label,
 .inputfile + label:hover {
     background-color: #5d8ac2;
 }
-
-button {
-	margin-top: 10px;
+.name {
+	color: white;
 }
 
+.load	 {
+	border:none;
+	border-radius: 20px;
+	width: 50%;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+    background-color: #c2845d;
+    display: inline-block;
+    padding: 8px 9px 6px 9px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+}
+.load:hover {
+	background-color: #5d8ac2;	
+}
+
+.o {
+	border:none;
+	border-radius: 20px;
+	width: 25%;
+    font-size: 15px;
+    font-weight: 700;
+    color: white;
+    background-color: #c2845d;
+    display: inline-block;
+    padding: 7px 5px 7px 5px;
+    margin-top: 20px;
+    margin-left: 2px;
+    margin-right: 2px;
+}
+.o:hover {
+	background-color: #5d8ac2;	
+}
 
 .main {
 	margin-left: 200px;
