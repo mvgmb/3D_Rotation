@@ -46,7 +46,9 @@ Vector.prototype.internalMult = function(v) {
 }
 
 Vector.prototype.normalize = function() {
-	var v = new Vector(this.x/this.norm, this.y/this.norm, this.z/this.norm);
+	var aux = 0;
+	if (this.norm != 0) aux = 1 / this.norm;
+	var v = new Vector(this.x*aux, this.y*aux, this.z*aux);
     return v;
 }
 

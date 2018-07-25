@@ -200,7 +200,9 @@ function prepRoutine() {
 
 	// Normalizing vertexes normals
 	for (var i = 0; i < (window.object.V.length); i++) {
+		console.log(window.object.V[i].N);
 		window.object.V[i].N = (window.object.V[i].N).normalize();
+		console.log(window.object.V[i].N);
 	}
 
 	mainRoutine();
@@ -298,27 +300,23 @@ function rotation(id, deg, cosine, sine) {
 		      	  [-sine, cosine, 0, 0],
 		      	  [0, 0, 1, 0],
 		      	  [0, 0, 0, 1]];  
-	    // Here is just rotation, because it's on the Z axis of the camera
-	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
 	} 
 	else if (id == 'oy') {
 		matRot = [[cosine, 0, -sine, 0],
 		      	  [0, 1, 0, 0],
 		      	  [sine, 0, cosine, 0],
 		      	  [0, 0, 0, 1]];
-	    translatedRotMatrix = mMatrixMatrix(toOrigin, translatedRotMatrix);
-	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
-	    translatedRotMatrix = mMatrixMatrix(fromOrigin, translatedRotMatrix);
 	} 
 	else if (id == 'ox') {
 		matRot = [[1, 0, 0, 0],
 		      	  [0, cosine, -sine, 0],
 		      	  [0, sine, cosine, 0],
 		      	  [0, 0, 0, 1]];
-	    translatedRotMatrix = mMatrixMatrix(toOrigin, translatedRotMatrix);
-	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
-	    translatedRotMatrix = mMatrixMatrix(fromOrigin, translatedRotMatrix);
 	}
+
+	translatedRotMatrix = mMatrixMatrix(toOrigin, translatedRotMatrix);
+	translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
+	translatedRotMatrix = mMatrixMatrix(fromOrigin, translatedRotMatrix);
 	// Always just rotation, vectors don't need to be translated
 	rotMatrix = mMatrixMatrix(matRot, rotMatrix);
 
@@ -374,25 +372,25 @@ function scanLine(i) {
 			s3 = a;
 		}
 	}	
-	drawTriangle(s1, s2, s3, i);
+	drawTriangle(s1, s2, s3, i, a, b, c);
 }	
 
-function drawTriangle(v1, v2, v3, i) {
+function drawTriangle(v1, v2, v3, i, s1, s2, s3) {
 	// Check for bottom-flat triangle
 	if (v2.y == v3.y) {
-    	fillBottomFlatTriangle(v1, v2, v3, i, v1, v2, v3);
+    	fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3);
   	}
   	// Check for top-flat triangle
   	else if (v1.y == v2.y) {
-    	fillTopFlatTriangle(v1, v2, v3, i, v1, v2, v3);
+    	fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3);
   	} 
   	// General case - split the triangle in a topflat and bottom-flat one
   	else {
     	var x4 = v1.x + ((v2.y - v1.y) / (v3.y - v1.y)) * (v3.x - v1.x),
     		y4 = v2.y;
     	var v4 = new Point2d(x4, y4);
-    	fillBottomFlatTriangle(v1, v2, v4, i, v1, v2, v3);
-    	fillTopFlatTriangle(v2, v4, v3, i, v1, v2, v3);
+    	fillBottomFlatTriangle(v1, v2, v4, i, s1, s2, s3);
+    	fillTopFlatTriangle(v2, v4, v3, i, s1, s2, s3);
   	}
 }
 
@@ -429,10 +427,8 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
   	}
 }
 
-
-
 function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
-var invslope1, invslope2; 
+	var invslope1, invslope2; 
 
 	// Handling division by zero
 	if (v3.y - v1.y == 0) {
@@ -479,31 +475,31 @@ function prePhong(x, y, s1, s2, s3, i) {
    	// p is the aproximation of the 3d point coordinate 
    	// p = u*a + v*b + w*c
 	var pz = (a.z * bar.u) + (b.z * bar.v) + (c.z * bar.w);
+	x = Math.round(x);
+  	
+	//if (x >= 0 && x < window.canvas.width && y >= 0 && y < window.canvas.height){
+		if (pz < window.z_buffer[x][y]) {
+			window.z_buffer[x][y] = pz;
+			var px = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
+	   	    	py = (a.y * bar.u) + (b.y * bar.v) + (c.y * bar.w);
 
-	if (pz < window.z_buffer[Math.round(x)][y]){
-		window.z_buffer[Math.round(x)][y] = pz;
-		
-		var px = (a.x * bar.u) + (b.x * bar.v) + (c.x * bar.w),
-   	    	py = (a.y * bar.u) + (b.y * bar.v) + (c.y * bar.w);
+	    	var N = (((a.N.scalarMult(bar.u)).plus(b.N.scalarMult(bar.v))).plus(c.N.scalarMult(bar.w)));
 
-    	var N = (((a.N.scalarMult(bar.u)).plus(b.N.scalarMult(bar.v))).plus(c.N.scalarMult(bar.w))).normalize();
-
-    	var s = new Point2d(Math.round(x), y, i);
-	    	
-    	phong(N, new Point(px, py, pz), s);
-   	}
+	    	var s = new Point2d(x, y, i);
+		    		
+	    	phong(N, new Point(px, py, pz), s);
+	   	}
+   //	}
 }
 
 // N is the normal (already normalized), p is aproximation of the point in 3d and s is the 2d screen location 
 function phong(N, p, s) {
+	// Normalize the Normal
+	N = N.normalize();
 	// V = (-1) * p
     var V = (new Vector(-p.x, -p.y, -p.z)).normalize();
     // L = Pl - p
     var L = (window.light.Pl.minus(p)).normalize();
-
-    // R = 2(L.N)N - L
-    var R = (N.scalarMult(((N.dotProduct(L)) * 2))).minus(L);
-    R = R.normalize();
 
     var ka = window.light.ka;
     var ks = window.light.ks;
@@ -513,25 +509,28 @@ function phong(N, p, s) {
     var Il = window.light.Il;
     var n = window.light.n;
 
-    // If V.N < 0 , then N = -N
+ 	// If V.N < 0 , then N = -N
     if (V.dotProduct(N) < 0) {
 		N = N.scalarMult(-1);
     }
-
-    var cosNL = N.dotProduct(L);
-
-    // If N.L < 0, then neither difuse or specular components
+	
+	// If N.L < 0, then neither difuse or specular components
     if (N.dotProduct(L) < 0) {
     	kd = 0;
     	ks = 0;
     }
 
-    var cosRV = R.dotProduct(V);
-
+	// R = 2(L.N)N - L
+    var R = (N.scalarMult(((N.dotProduct(L)) * 2))).minus(L);
+    R = R.normalize();
+    
     // If cosRV < 0, then there's no specular light
+   	var cosRV = R.dotProduct(V);
     if (cosRV < 0) {
 		ks = 0;
     }
+
+    var cosNL = N.dotProduct(L);
 
     var IlOd = Il.internalMult(Od);
 
@@ -550,7 +549,7 @@ function phong(N, p, s) {
     I.x = Math.min(I.x, 255);
     I.y = Math.min(I.y, 255);
     I.z = Math.min(I.z, 255);
-  
+
 	window.ctx.fillStyle = 'rgb(' + I.x + ',' + I.y + ',' + I.z +')';
    	window.ctx.fillRect(s.x, s.y, 1, 1);
   	window.ctx.stroke();
