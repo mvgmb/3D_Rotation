@@ -54,6 +54,13 @@ window.onload = function () {
 		lightFileChooser.addEventListener('change', fileReadingRoutine, false);
 		objectFileChooser.addEventListener('change', fileReadingRoutine, false);
 		readBtn.addEventListener('click', prepRoutine, false);
+
+		var oxBtn = document.getElementById('ox');
+		var oyBtn = document.getElementById('oy');
+		var ozBtn = document.getElementById('oz');
+		oxBtn.addEventListener('click', prepRotation, false);
+		oyBtn.addEventListener('click', prepRotation, false);
+		ozBtn.addEventListener('click', prepRotation, false);
     } 
     else { 
 		alert("This navigator does not support Files");
@@ -200,6 +207,8 @@ function prepRoutine() {
 }
 
 function mainRoutine() {
+	window.ctx.clearRect(0, 0, window.canvas.width, window.canvas.height);
+
 	// Ordering faces (aka triangles) so eases up on the color calculus
 	// Therefore the ones closer to the screen will be the first to be rendered
     window.object.F = window.object.F.sort(function(f1, f2) {
@@ -250,9 +259,82 @@ function mainRoutine() {
 	*/
 }
 
-function prepRotation() {
+function prepRotation(e) {
+	console.log(e.target.id);
+	var id = e.target.id;
+	var deg = parseInt(document.getElementById('Radius').value);
+	if (isNaN(deg)) { deg = 90; }
+	deg = deg * Math.PI/180;
 
+	var cosine = Math.cos(deg),
+		sine = Math.sin(deg);
+	rotation(id, deg, cosine, sine);
+}
 
+function rotation(id, deg, cosine, sine) {
+	// Matrix to rotate vectors, without translation
+    var rotMatrix = [[1, 0, 0, 0],
+	 	     		 [0, 1, 0, 0],
+		     		 [0, 0, 1, 0],
+		     		 [0, 0, 0, 1]];
+	// Translates centroid to the origin		     		 
+	var toOrigin = [[1, 0, 0, -window.object.centroid.x],
+	 	    		[0, 1, 0, -window.object.centroid.y],
+		    		[0, 0, 1, -window.object.centroid.z],
+		    		[0, 0, 0, 1]];
+	// Translates centroid back to it's original position
+    var fromOrigin = [[1, 0, 0, window.object.centroid.x],
+	 	      		  [0, 1, 0, window.object.centroid.y],
+		        	  [0, 0, 1, window.object.centroid.z],
+		      		  [0, 0, 0, 1]];
+	// This will be the result matrix that will rotate the vertexes
+	var translatedRotMatrix = [[1, 0, 0, 0],
+	 					       [0, 1, 0, 0],
+			    			   [0, 0, 1, 0],
+			       			   [0, 0, 0, 1]];
+
+	if (id == 'oz') {
+ 		matRot = [[cosine, sine, 0, 0],
+		      	  [-sine, cosine, 0, 0],
+		      	  [0, 0, 1, 0],
+		      	  [0, 0, 0, 1]];  
+	    // Here is just rotation, because it's on the Z axis of the camera
+	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
+	} 
+	else if (id == 'oy') {
+		matRot = [[cosine, 0, -sine, 0],
+		      	  [0, 1, 0, 0],
+		      	  [sine, 0, cosine, 0],
+		      	  [0, 0, 0, 1]];
+	    translatedRotMatrix = mMatrixMatrix(toOrigin, translatedRotMatrix);
+	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
+	    translatedRotMatrix = mMatrixMatrix(fromOrigin, translatedRotMatrix);
+	} 
+	else if (id == 'ox') {
+		matRot = [[1, 0, 0, 0],
+		      	  [0, cosine, -sine, 0],
+		      	  [0, sine, cosine, 0],
+		      	  [0, 0, 0, 1]];
+	    translatedRotMatrix = mMatrixMatrix(toOrigin, translatedRotMatrix);
+	    translatedRotMatrix = mMatrixMatrix(matRot, translatedRotMatrix);
+	    translatedRotMatrix = mMatrixMatrix(fromOrigin, translatedRotMatrix);
+	}
+	// Always just rotation, vectors don't need to be translated
+	rotMatrix = mMatrixMatrix(matRot, rotMatrix);
+
+	for (var i = 0; i < (window.object.V.length); i++) {
+		// Stores normal, so we can rotate it
+		var N = window.object.V[i].N;
+		// Transforms points, translating them to the origin, rotating and 
+		// translating them back 
+		window.object.V[i] = pVectorMatrix(window.object.V[i], translatedRotMatrix);
+		// rotaciona os vetores, que não devem sofrer translação
+		window.object.V[i].N = vVectorMatrix(N, rotMatrix).normalize();
+    }
+    // Rotates centroid
+    window.object.centroid = pVectorMatrix(window.object.centroid, translatedRotMatrix);
+
+    mainRoutine();
 }
 
 // Scan Line Polygon Fill Algorithm
@@ -309,14 +391,13 @@ function drawTriangle(v1, v2, v3, i) {
     	var x4 = v1.x + ((v2.y - v1.y) / (v3.y - v1.y)) * (v3.x - v1.x),
     		y4 = v2.y;
     	var v4 = new Point2d(x4, y4);
-
     	fillBottomFlatTriangle(v1, v2, v4, i, v1, v2, v3);
     	fillTopFlatTriangle(v2, v4, v3, i, v1, v2, v3);
   	}
 }
 
 function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
-	var invslope1, invslope2;
+  var invslope1, invslope2;
 	// Handling division by zero
 	if (v2.y - v1.y == 0) {
 		invslope1 = 0;
@@ -328,31 +409,30 @@ function fillBottomFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	} else {
    		invslope2 = (v3.x - v1.x) / (v3.y - v1.y);
     }
-
-    var curx1 = v1.x;
-  	var curx2 = v1.x;
-
+    
 	if (invslope1 > invslope2) {
 		var tmp = invslope2;
 		invslope2 = invslope1;
 		invslope1 = tmp;
 	}
+	
+    var curx1 = v1.x;
+  	var curx2 = v1.x;
 
     for (var y = v1.y; y <= v2.y; y++) {
+    
     	for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
-			//window.ctx.fillStyle = 'rgb(0,0,255)';
-		   //	window.ctx.fillRect(curx1, y, 1, 1);	
-		   //	window.ctx.fillRect(curx2, y, 1, 1);
-		  	//window.ctx.stroke();
 		}
 	   	curx1 += invslope1;
     	curx2 += invslope2;
   	}
 }
 
+
+
 function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
-	var invslope1, invslope2; 
+var invslope1, invslope2; 
 
 	// Handling division by zero
 	if (v3.y - v1.y == 0) {
@@ -376,15 +456,12 @@ function fillTopFlatTriangle(v1, v2, v3, i, s1, s2, s3) {
 	}
 	
 	// Scanline y == y
-	for (var y = v3.y; y > v1.y; y--) {
-		
+	for (var y = v3.y; y >= v1.y; y--) {
+	
 		for (var k = curx1; k <= curx2; k++) {
 			prePhong(k, y, s1, s2, s3, i);
-			/*window.ctx.fillStyle = 'rgb(0,0,255)';
-		   	window.ctx.fillRect(curx1, y, 1, 1);	
-		   	window.ctx.fillRect(curx2, y, 1, 1);
-			window.ctx.stroke(); */ 
-		}
+			
+	}
 	    curx1 -= invslope1;
 	    curx2 -= invslope2;
 	}
@@ -411,9 +488,9 @@ function prePhong(x, y, s1, s2, s3, i) {
 
     	var N = (((a.N.scalarMult(bar.u)).plus(b.N.scalarMult(bar.v))).plus(c.N.scalarMult(bar.w))).normalize();
 
-    	var s = new Point2d(x, y, i);
+    	var s = new Point2d(Math.round(x), y, i);
 	    	
-    	phong(N, new Point(px, py, px), s);
+    	phong(N, new Point(px, py, pz), s);
    	}
 }
 
